@@ -14,12 +14,12 @@ class TypewiseAlert:
         self.__breach_type_email_message = {
                 'TOO_LOW': {
                     'recepient': "a.b@c.com",
-                    'message': 'Hi, the temperature is too low'
+                    'message': 'Hi, the temperature is {}'
                     },
                 
                 'TOO_HIGH': {
                     'recepient': "a.b@c.com",
-                    'message': 'Hi, the temperature is too low'
+                    'message': 'Hi, the temperature is {}'
                     }
             }
         
@@ -52,6 +52,6 @@ class TypewiseAlert:
 
     def send_to_email(self, breach_type):
         print(f"To: {self.__breach_type_email_message[breach_type]['recepient']}")
-        print('Hi, the temperature is {}'.format(breach_type.replace("_"," ").lower()))
+        print(self.__breach_type_email_message[breach_type]['message'].format(breach_type.replace("_"," ").lower()))
         
 
