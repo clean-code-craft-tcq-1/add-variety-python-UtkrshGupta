@@ -52,11 +52,16 @@ class TypewiseAlert:
             return self.infer_breach(temperature_in_C, lower_limit, upper_limit)
         else:
             return 'INVALID_INPUT'
+    def get_breach_type(self, battery_char, temperature_in_C):
+        if battery_char is not None:
+            return self.classify_temperature_breach(battery_char['cooling_type'], temperature_in_C)
+        return "INVALID_INPUT"
         
     def check_and_alert(self, alert_target, battery_char, temperature_in_C):
-        breach_type =\
-            self.classify_temperature_breach(battery_char['cooling_type'], temperature_in_C)
-        
+
+        breach_type = \
+            self.get_breach_type(battery_char, temperature_in_C)
+            
         if self.__check_if_alert_target_and_breach_type_are_valid(alert_target, breach_type):
             return self.__alert_message_targets[alert_target](breach_type)
         else:

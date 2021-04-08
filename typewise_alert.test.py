@@ -18,6 +18,9 @@ class TypewiseTest(unittest.TestCase):
         self.assertTrue(twa.check_and_alert('TO_MAIL', {'cooling_type': 'LOW_ACTIVE_COOLING'}, 30) == 'INVALID_INPUT')
         self.assertTrue(twa.check_and_alert('TO_MAIL', {'cooling_type': 'PASSIVE_COOLING'}, None) == 'INVALID_INPUT')
         self.assertTrue(twa.check_and_alert('TO_MAIL', {'cooling_type': 'LOW_ACTIVE_COOLING'}, None) == 'INVALID_INPUT')                   
+        self.assertTrue(twa.check_and_alert('TO_CONSOLE', {'cooling_type': 'PASSIVE_COOLING'}, float('nan')) == 'INVALID_INPUT')                   
+        self.assertTrue(twa.check_and_alert(None, None, None)== 'INVALID_INPUT')
+        self.assertTrue(twa.check_and_alert('TO_CONSOLE', {'cooling_type': None}, 70)=='INVALID_INPUT')
         
 if __name__ == '__main__':
   unittest.main()
