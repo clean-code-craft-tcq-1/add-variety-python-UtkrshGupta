@@ -1,5 +1,5 @@
 from math import isnan
-
+from typewise_alert_Exception import Invalid_Input
 class TypewiseAlert:
     def __init__(self):
         self.__cooling_types = { 
@@ -34,11 +34,21 @@ class TypewiseAlert:
                     }
             }
         
+        self.__target_sent_to_status = {
+                'TO_CONTROLLER': False,
+                'TO_EMAIL': False,
+                'TO_CONSOLE': False
+            }
+        self.__controller_active_status = 'ON'
+        self.__email_tcp_status = 'ON'
+        self.__console_active_status = 'ON'
         self.__local_controller_header = 0xfeed
      
+    
     def get_cooling_type_limits(self, cooling_type):
         return self.__cooling_types[cooling_type].values()
 
+    
     def infer_breach(self, value, lowerLimit, upperLimit):
         if value < lowerLimit:
             return 'TOO_LOW'
@@ -46,17 +56,20 @@ class TypewiseAlert:
             return 'TOO_HIGH'
         return 'NORMAL'
     
+    
     def classify_temperature_breach(self, cooling_type, temperature_in_C):
         if self.__is_cooling_type_and_temperature_valid(cooling_type, temperature_in_C):
             lower_limit, upper_limit = self.get_cooling_type_limits(cooling_type)
             return self.infer_breach(temperature_in_C, lower_limit, upper_limit)
         else:
             return 'INVALID_INPUT'
+    
     def get_breach_type(self, battery_char, temperature_in_C):
         if battery_char is not None:
             return self.classify_temperature_breach(battery_char['cooling_type'], temperature_in_C)
         return "INVALID_INPUT"
         
+    
     def check_and_alert(self, alert_target, battery_char, temperature_in_C):
 
         breach_type = \
@@ -65,34 +78,76 @@ class TypewiseAlert:
         if self.__check_if_alert_target_and_breach_type_are_valid(alert_target, breach_type):
             return self.__alert_message_targets[alert_target](breach_type)
         else:
-            return 'INVALID_INPUT'
+            raise Invalid_Input('Invalid Input Arguments')
+            return
         
+    
     def send_to_controller(self, breach_type):
-        print(f'CONTROLLER MESSAGE: {self.__local_controller_header}, {breach_type}')
-        return "CONTROLLER_INVOKED"
-
+        self.__target_sent_to_status['TO_CONTROLLER'] = False
+        if self.get_controller_status() == 'ON':
+            print(f'CONTROLLER MESSAGE: {self.__local_controller_header}, {breach_type}')
+            self.__target_sent_to_status['TO_CONTROLLER'] = True 
+        return self.__target_sent_to_status['TO_CONTROLLER']
+        
+    
     def send_to_email(self, breach_type):
-        print(f"From: {self.__breach_type_email_message[breach_type]['sender']}")
-        print(f"To: {self.__breach_type_email_message[breach_type]['recepient']}")
-        print(self.__breach_type_email_message[breach_type]['message'].format(breach_type.replace("_"," ")))
-        return 'EMAIL_SENT'
+        self.__target_sent_to_status['TO_EMAIL'] = False
+        if self.get_email_tcp_status() == 'ON':        
+            print(f"From: {self.__breach_type_email_message[breach_type]['sender']}")
+            print(f"To: {self.__breach_type_email_message[breach_type]['recepient']}")
+            print(self.__breach_type_email_message[breach_type]['message'].format(breach_type.replace("_"," ")))
+            self.__target_sent_to_status['TO_EMAIL'] = True 
+        return self.__target_sent_to_status['TO_EMAIL']
+    
     
     def send_to_console(self, breach_type):
-        print(f'CONSOLE MESSAGE: Temperatue is {breach_type.replace("_"," ")}')
-        return 'LOGGED_ON_CONSOLE'
+        self.__target_sent_to_status['TO_CONSOLE'] = False
+        if self.get_console_status() == 'ON':          
+            print(f'CONSOLE MESSAGE: Temperatue is {breach_type.replace("_"," ")}')
+            self.__target_sent_to_status['TO_CONSOLE'] = True 
+        return self.__target_sent_to_status['TO_CONSOLE']
+    
     
     def __is_input_temperature_valid(self, temperature_in_C):
         if temperature_in_C != None and not isnan(temperature_in_C):
             return True
         return False
     
+    
     def __is_cooling_type_and_temperature_valid(self, cooling_type, temperature_in_C):
         if self.__is_input_temperature_valid(temperature_in_C) and cooling_type in self.__cooling_types.keys():
             return True
         return False
      
+    
     def __check_if_alert_target_and_breach_type_are_valid(self, alert_target, breach_type):
         if alert_target in self.__alert_message_targets.keys() and \
             breach_type != 'INVALID_INPUT':
                 return True
-        return False   
+        return False  
+    
+    
+    def get_controller_status(self):
+        return self.__controller_active_status
+    
+    
+    def get_email_tcp_status(self):
+        return self.__email_tcp_status
+    
+    
+    def get_console_status(self):
+        return self.__console_active_status
+    
+    def set_controller_status(self, status):
+        self.__controller_active_status = status
+        return self.__controller_active_status
+    
+    
+    def set_email_tcp_status(self, status):
+        self.__email_tcp_status = status
+        return self.__email_tcp_status
+    
+    
+    def set_console_status(self, status):
+        self.__console_active_status = status
+        return self.__console_active_status    
